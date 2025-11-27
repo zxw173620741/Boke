@@ -1,0 +1,2 @@
+CREATE DATABASE boke;
+USE boke;
