@@ -1,30 +1,23 @@
 <script setup>
 import { useRouter } from 'vue-router'
-import { ref, onMounted } from 'vue'
-const router = useRouter()
-const userInfo = ref(null)
+import { useUserStore } from '@/stores/user'
 
-onMounted(() => {
-    const storedUser = localStorage.getItem('user')
-    if (storedUser) {
-        userInfo.value = storedUser
-    }
-})
+const Userstore = useUserStore()
+const router = useRouter()
+
 const goLogin = () => {
     router.push('/login')
 }
 
 // 新增：前往个人资料页的方法
 const goProfile = () => {
-    // 假设你未来会做一个 /profile 页面
     router.push('/profile')
     console.log('去个人资料页')
 }
 
 // 新增：退出登录（为了让你能测试效果，我加了个退出功能）
 const handleLogout = () => {
-    localStorage.removeItem('user') // 删掉本地存储
-    userInfo.value = null           // 界面立刻变回未登录状态
+    Userstore.handleLogout()
 }
 </script>
 
@@ -45,8 +38,8 @@ const handleLogout = () => {
                 <a href="#">游戏</a>
             </div>
             <div class="auth-buttons">
-                <div v-if="userInfo" class="logged-in-box">
-                    <span class="user-name">Hi, {{ userInfo || '用户' }}</span>
+                <div v-if="Userstore.userInfo" class="logged-in-box">
+                    <span class="user-name">Hi, {{ Userstore.userInfo.nickName || Userstore.userInfo.userName }}</span>
 
                     <button @click="goProfile" class="btn profile-btn">个人资料</button>
                     <button @click="handleLogout" class="btn logout-btn">退出</button>

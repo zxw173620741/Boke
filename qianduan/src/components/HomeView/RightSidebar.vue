@@ -1,20 +1,53 @@
 <script setup>
 import { useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/user'
 
+const Userstore = useUserStore()
 const router = useRouter()
+
+// 跳转登录
 const goLogin = () => {
     router.push('/login')
+}
+
+const handleLogout = () => {
+    Userstore.handleLogout()
 }
 </script>
 
 <template>
     <aside class="right-sidebar">
-        <div class="login-panel">
+
+        <div v-if="!Userstore.userInfo" class="login-panel">
             <div class="login-tips">登录后可以保存您的浏览喜好、评论、收藏，并与好友分享乐趣。</div>
             <button @click="goLogin" class="big-login-btn">立即登录</button>
             <div class="helper-links">
                 <span>忘记密码</span> | <span>注册新账号</span>
             </div>
+        </div>
+
+        <div v-else class="login-panel user-panel">
+            <div class="user-header">
+                <div class="avatar"></div>
+                <div class="username">{{ Userstore.userInfo.nickName || Userstore.userInfo.userName }}</div>
+            </div>
+
+            <div class="user-stats">
+                <div class="stat-item">
+                    <div class="count">128</div>
+                    <div class="label">关注</div>
+                </div>
+                <div class="stat-item">
+                    <div class="count">3200</div>
+                    <div class="label">粉丝</div>
+                </div>
+                <div class="stat-item">
+                    <div class="count">56</div>
+                    <div class="label">微博</div>
+                </div>
+            </div>
+
+            <button @click="handleLogout" class="big-logout-btn">退出登录</button>
         </div>
 
         <div class="hot-list">
@@ -28,6 +61,7 @@ const goLogin = () => {
 </template>
 
 <style scoped>
+/* 保持原有样式... */
 .right-sidebar {
     width: 280px;
 }
@@ -83,5 +117,77 @@ const goLogin = () => {
 
 .hot-item:hover {
     color: #fa7d3c;
+}
+
+/* === 新增：已登录状态的样式 === */
+.user-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.avatar {
+    width: 60px;
+    height: 60px;
+    background-color: #ddd;
+    /* 暂时用灰色占位 */
+    border-radius: 50%;
+    margin-bottom: 10px;
+    border: 2px solid #fa7d3c;
+}
+
+.username {
+    font-weight: bold;
+    font-size: 16px;
+    color: #333;
+}
+
+.user-stats {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+    padding: 10px 0;
+    border-top: 1px solid #f2f2f2;
+    border-bottom: 1px solid #f2f2f2;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+}
+
+.stat-item:hover .count {
+    color: #fa7d3c;
+}
+
+.stat-item .count {
+    font-weight: bold;
+    font-size: 16px;
+    color: #333;
+}
+
+.stat-item .label {
+    font-size: 12px;
+    color: #808080;
+    margin-top: 2px;
+}
+
+.big-logout-btn {
+    width: 100%;
+    height: 30px;
+    background: #fff;
+    color: #808080;
+    border: 1px solid #dcdcdc;
+    border-radius: 2px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.big-logout-btn:hover {
+    background: #f2f2f2;
+    color: #333;
 }
 </style>

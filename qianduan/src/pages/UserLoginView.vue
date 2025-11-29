@@ -1,12 +1,18 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/user' // 1. 引入 Store
 
 const router = useRouter()
+const userStore = useUserStore() // 2. 初始化 Store
+
+// 表单数据
 const user = ref({
     userName: '',
     password: ''
 })
+
+// 登录按钮逻辑
 const handleLogin = async () => {
     // 1. 简单的非空校验
     if (!user.value.userName || !user.value.password) {
@@ -15,26 +21,18 @@ const handleLogin = async () => {
     }
 
     try {
-        const response = await fetch('/api/user/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(user.value)
-        })
+        // 2. 调用 Store 的 login 方法
+        // 所有的脏活累活（发请求、存数据）都在 userStore.login 里做完了
+        await userStore.login(user.value)
 
-        const res = await response.json()
+        // 3. 如果上面没报错，说明成功了
+        alert('🎉 登录成功！')
+        router.push('/')
 
-        // 3. 处理结果
-        if (res.code === 1) {
-            // alert('🎉 登录成功！')
-            console.log(res.data)
-            localStorage.user = res.data.userName;
-            router.push('/')
-        } else {
-            alert('❌ ' + (res.msg || '登录失败'))
-        }
     } catch (error) {
+        // 4. 捕获 Store 抛出的错误 (比如密码错误)
         console.error(error)
-        alert('网络连接失败，请检查后端服务')
+        alert('❌ ' + error.message)
     }
 }
 </script>
@@ -59,6 +57,7 @@ const handleLogin = async () => {
 </template>
 
 <style scoped>
+/* 样式保持不变，此处省略... */
 .login-container {
     height: 100vh;
     display: flex;
