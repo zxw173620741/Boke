@@ -2,6 +2,12 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
+// ✅ 1. 引入 AutoImport 插件
+import AutoImport from 'unplugin-auto-import/vite'
+// ✅ 2. 引入 Components 插件
+import Components from 'unplugin-vue-components/vite'
+// ✅ 3. 引入 Element Plus 解析器
+import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 
 export default defineConfig({
   plugins: [
