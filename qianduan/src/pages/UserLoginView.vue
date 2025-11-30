@@ -21,12 +21,7 @@ const handleLogin = async () => {
     }
 
     try {
-        // 2. 调用 Store 的 login 方法
-        // 所有的脏活累活（发请求、存数据）都在 userStore.login 里做完了
         await userStore.login(user.value)
-
-        // 3. 如果上面没报错，说明成功了
-        alert('🎉 登录成功！')
         router.push('/')
 
     } catch (error) {
