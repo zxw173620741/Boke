@@ -1,12 +1,11 @@
 package org.demo.houduan.Controller;
 
+import org.demo.houduan.Entity.Article;
 import org.demo.houduan.Service.ArticleService;
 import org.demo.houduan.common.Result;
 import org.demo.houduan.Vo.ArticleVO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -27,5 +26,18 @@ public class ArticleController {
         List<ArticleVO> list = articleService.listAll();
 
         return Result.success(list);
+    }
+    @PostMapping("/add")
+    public Result publish(@RequestBody Article article) {
+        // 简单校验
+        if (article.getContent() == null || article.getContent().trim().isEmpty()) {
+            return Result.error("内容不能为空");
+        }
+        if (article.getUserId() == null) {
+            return Result.error("未获取Ts用户ID");
+        }
+
+        articleService.publish(article);
+        return Result.success("发布成功");
     }
 }

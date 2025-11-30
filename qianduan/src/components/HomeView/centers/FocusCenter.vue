@@ -1,38 +1,70 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { getArticleListService } from '@/api/article.js'
+import { getArticleListService, publishArticleService } from '@/api/article.js' // 引入新API
+import { useUserStore } from '@/stores/user' // 1. 引入 UserStore
 
-// 定义响应式数据，存放文章列表
+const userStore = useUserStore() // 2. 初始化 store
 const articleList = ref([])
+const publishContent = ref('') // 3. 定义响应式变量绑定输入框
 
-// 获取文章数据的函数
+// 获取文章列表 (保持不变)
 const getArticleList = async () => {
     try {
-        // 发送请求
         const data = await getArticleListService()
-        // 更新数据
         articleList.value = data
-        console.log('获取到的文章数据:', data)
     } catch (error) {
-        console.error('获取文章列表失败:', error)
+        console.error(error)
     }
 }
-// 识别文本中的 URL 并转换为链接
-const formatContent = (content) => {
-    if (!content) return ''
 
-    // 正则表达式匹配 http/https 开头的链接
+// 格式化内容 (保持不变)
+const formatContent = (content) => {
+    if (!content) return '' // 如果内容为空，返回空字符串
+
+    // 正则匹配链接
     const urlRegex = /(https?:\/\/[^\s]+)/g
 
-    // 将匹配到的链接替换为 <a href="..." target="_blank">...</a>
-    // target="_blank" 表示在新标签页打开
-    // @click.stop 阻止冒泡（在 v-html 里写不了 @click，但这里是个纯静态替换）
+    // 将链接转换为可点击的 a 标签
     return content.replace(urlRegex, (url) => {
         return `<a href="${url}" target="_blank" style="color: #409eff; text-decoration: none;">${url}</a>`
     })
 }
 
-// 组件挂载后，立刻获取数据
+// ⭐ 4. 核心逻辑：处理发布
+const handlePublish = async () => {
+    // 4.1 检查是否登录
+    if (!userStore.userInfo) {
+        alert('请先登录后再发布新鲜事！')
+        return
+    }
+
+    // 4.2 检查内容是否为空
+    if (!publishContent.value.trim()) {
+        alert('写点什么再发吧~')
+        return
+    }
+
+    try {
+        // 4.3 构造参数
+        const articleData = {
+            userId: userStore.userInfo.id, // 从登录信息中获取 ID
+            content: publishContent.value,
+            source: '网页版' // 暂时写死
+        }
+
+        // 4.4 调用接口
+        await publishArticleService(articleData)
+
+        alert('发布成功！')
+        publishContent.value = '' // 清空输入框
+        getArticleList() // 刷新列表，看到刚才发的内容
+
+    } catch (error) {
+        console.error('发布失败', error)
+        alert('发布失败，请稍后再试')
+    }
+}
+
 onMounted(() => {
     getArticleList()
 })
@@ -43,10 +75,12 @@ onMounted(() => {
         <!-- 发布框 (暂时保持不变) -->
         <div class="publish-card">
             <div class="publish-title">有什么新鲜事想告诉大家？</div>
-            <textarea placeholder="快来分享你的博客心得吧..."></textarea>
+
+            <textarea v-model="publishContent" placeholder="快来分享你的博客心得吧..."></textarea>
+
             <div class="publish-footer">
                 <div class="tools">😊 📷 🔗</div>
-                <button class="pub-btn">发布</button>
+                <button class="pub-btn" @click="handlePublish">发布</button>
             </div>
         </div>
 

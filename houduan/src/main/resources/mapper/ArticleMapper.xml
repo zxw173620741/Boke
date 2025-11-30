@@ -35,5 +35,9 @@
                  LEFT JOIN `user` u ON a.user_id = u.id
         ORDER BY a.create_time DESC
     </select>
+    <insert id="insert" parameterType="org.demo.houduan.Entity.Article">
+        INSERT INTO article (user_id, content, source, create_time, update_time)
+        VALUES (#{userId}, #{content}, #{source}, NOW(), NOW())
+    </insert>
 
 </mapper>

@@ -13,4 +13,8 @@ public interface ArticleMapper {
      * @return 文章列表
      */
     List<ArticleVO> selectAllArticles();
+    /**
+     * 新增文章
+     */
+    int insert(org.demo.houduan.Entity.Article article);
 }
