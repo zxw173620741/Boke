@@ -1,12 +1,46 @@
 <script setup>
-// 这里逻辑暂时不变
-const goDetail = (id) => {
-    console.log('查看帖子详情:', id)
+import { ref, onMounted } from 'vue'
+import { getArticleListService } from '@/api/article.js'
+
+// 定义响应式数据，存放文章列表
+const articleList = ref([])
+
+// 获取文章数据的函数
+const getArticleList = async () => {
+    try {
+        // 发送请求
+        const data = await getArticleListService()
+        // 更新数据
+        articleList.value = data
+        console.log('获取到的文章数据:', data)
+    } catch (error) {
+        console.error('获取文章列表失败:', error)
+    }
 }
+// 识别文本中的 URL 并转换为链接
+const formatContent = (content) => {
+    if (!content) return ''
+
+    // 正则表达式匹配 http/https 开头的链接
+    const urlRegex = /(https?:\/\/[^\s]+)/g
+
+    // 将匹配到的链接替换为 <a href="..." target="_blank">...</a>
+    // target="_blank" 表示在新标签页打开
+    // @click.stop 阻止冒泡（在 v-html 里写不了 @click，但这里是个纯静态替换）
+    return content.replace(urlRegex, (url) => {
+        return `<a href="${url}" target="_blank" style="color: #409eff; text-decoration: none;">${url}</a>`
+    })
+}
+
+// 组件挂载后，立刻获取数据
+onMounted(() => {
+    getArticleList()
+})
 </script>
 
 <template>
     <main class="feed-content">
+        <!-- 发布框 (暂时保持不变) -->
         <div class="publish-card">
             <div class="publish-title">有什么新鲜事想告诉大家？</div>
             <textarea placeholder="快来分享你的博客心得吧..."></textarea>
@@ -16,33 +50,50 @@ const goDetail = (id) => {
             </div>
         </div>
 
-        <div class="post-card" v-for="i in 5" :key="i">
+        <!-- 文章列表 (从后端获取真实数据) -->
+        <!-- 这里的 item 就是后端返回的 ArticleVO 对象 -->
+        <div class="post-card" v-for="item in articleList" :key="item.id">
             <div class="post-header">
+                <!-- 头像: 这里暂时用默认样式，后面可以换成 :style="{ backgroundImage: `url(${item.authorAvatar})` }" -->
                 <div class="avatar"></div>
-                <div class="user-info">
-                    <div class="username">技术博主{{ i }}号</div>
-                    <div class="time">2小时前 · 来自 网页版</div>
-                </div>
 
-                <button class="detail-btn" @click="goDetail(i)">查看详细 ></button>
+                <div class="user-info">
+                    <!-- 显示作者昵称，如果没有昵称就显示用户名 -->
+                    <div class="username">{{ item.authorNickName || item.authorName }}</div>
+
+                    <!-- 显示发布时间 (简单处理，后端返回的是 ISO 格式字符串) -->
+                    <div class="time">{{ item.createTime }} · 来自 {{ item.source || '网页版' }}</div>
+                </div>
             </div>
 
             <div class="post-body">
-                <p>这是第 {{ i }} 条模拟的微博内容。今天学习了 Vue3 的路由配置，感觉非常丝滑！前端工程化开发效率真的很高。#编程 #学习打卡</p>
+                <!-- 显示文章内容 -->
+
+                <p v-html="formatContent(item.content)"></p>
+
+
+                <!-- 如果有图片，可以在这里解析 item.images 并显示 -->
+                <!-- <div v-if="item.images" class="post-images">...</div> -->
             </div>
+
             <div class="post-footer">
-                <div class="action-item">↪ 转发</div>
-                <div class="action-item">💬 评论</div>
-                <div class="action-item">👍 点赞</div>
+                <!-- 显示真实的互动数据 -->
+                <div class="action-item">↪ 转发 {{ item.shareCount || '' }}</div>
+                <div class="action-item">💬 评论 {{ item.commentCount || '' }}</div>
+                <div class="action-item">👍 点赞 {{ item.likeCount || '' }}</div>
             </div>
+        </div>
+
+        <!-- 如果没有数据，显示空状态 (可选) -->
+        <div v-if="articleList.length === 0" class="empty-tip">
+            暂无内容，快去发布第一条博客吧！
         </div>
     </main>
 </template>
 
 <style scoped>
-/*原有样式保持不变...*/
 .feed-content {
-    width: 100%;
+    width: 600px;
 }
 
 .publish-card {
@@ -89,15 +140,11 @@ const goDetail = (id) => {
     padding: 20px;
     border-radius: 4px;
     margin-bottom: 15px;
-    position: relative;
-    /* 为以后可能的定位做准备 */
 }
 
 .post-header {
     display: flex;
     margin-bottom: 10px;
-    align-items: center;
-    /* 确保头像、文字、按钮垂直居中对齐 */
 }
 
 .avatar {
@@ -123,6 +170,8 @@ const goDetail = (id) => {
     font-size: 14px;
     line-height: 1.6;
     margin-bottom: 15px;
+    white-space: pre-wrap;
+    /* 关键：保留文章里的换行符 */
 }
 
 .post-footer {
@@ -143,23 +192,9 @@ const goDetail = (id) => {
     color: #fa7d3c;
 }
 
-/* --- 【新增】详细按钮样式 --- */
-.detail-btn {
-    margin-left: auto;
-    /* 核心代码：把按钮推到最右边 */
-    background: #fff;
-    border: 1px solid #fa7d3c;
-    color: #fa7d3c;
-    font-size: 12px;
-    padding: 4px 10px;
-    border-radius: 12px;
-    /* 圆角胶囊形状 */
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.detail-btn:hover {
-    background: #fa7d3c;
-    color: #fff;
+.empty-tip {
+    text-align: center;
+    color: #999;
+    padding: 40px 0;
 }
 </style>

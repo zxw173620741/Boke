@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.demo.houduan.Mapper.ArticleMapper">
+
+    <!-- 定义 ResultMap，处理复杂的映射关系 -->
+    <resultMap id="ArticleVOResultMap" type="org.demo.houduan.Vo.ArticleVO">
+        <!-- 1. 映射 Article 本身的字段 -->
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="content" column="content"/>
+        <result property="images" column="images"/>
+        <result property="source" column="source"/>
+        <result property="likeCount" column="like_count"/>
+        <result property="commentCount" column="comment_count"/>
+        <result property="shareCount" column="share_count"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+
+        <!-- 2. 映射 User 表的字段 (别名) -->
+        <result property="authorName" column="user_name"/>
+        <result property="authorNickName" column="nick_name"/>
+        <!-- <result property="authorAvatar" column="avatar"/> 暂时 user 表没这个字段 -->
+    </resultMap>
+
+    <!-- 关联查询 SQL -->
+    <select id="selectAllArticles" resultMap="ArticleVOResultMap">
+        SELECT
+            a.*,
+            u.user_name,
+            u.nick_name
+        FROM article a
+                 LEFT JOIN `user` u ON a.user_id = u.id
+        ORDER BY a.create_time DESC
+    </select>
+
+</mapper>

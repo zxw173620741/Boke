@@ -4,7 +4,17 @@ import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 
 export default defineConfig({
-  plugins: [vue(), vueDevTools()],
+  plugins: [
+    vue(),
+    vueDevTools(),
+    AutoImport({
+      resolvers: [ElementPlusResolver()],
+      imports: ['vue', 'vue-router'],
+    }),
+    Components({
+      resolvers: [ElementPlusResolver()],
+    }),
+  ],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
