@@ -1,21 +1,21 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+// 1. 引入 HomeStore
+import { useHomeStore } from '@/stores/home'
 
 const Userstore = useUserStore()
+const Homestore = useHomeStore() // 2. 实例化
 const router = useRouter()
 
 const goLogin = () => {
     router.push('/login')
 }
 
-// 新增：前往个人资料页的方法
 const goProfile = () => {
     router.push('/profile')
-    console.log('去个人资料页')
 }
 
-// 新增：退出登录（为了让你能测试效果，我加了个退出功能）
 const handleLogout = () => {
     Userstore.handleLogout()
 }
@@ -31,20 +31,28 @@ const handleLogout = () => {
                 <input type="text" placeholder="大家都在搜：Java学习路线" />
                 <button>🔍</button>
             </div>
+
             <div class="nav-links">
-                <a href="#" class="active">首页</a>
-                <a href="#">视频</a>
-                <a href="#">发现</a>
-                <a href="#">游戏</a>
+                <a href="#" :class="{ active: Homestore.HomeMode === 'FocusMode' }"
+                    @click.prevent="Homestore.setFocus">首页</a>
+
+                <a href="#" :class="{ active: Homestore.HomeMode === 'WatchMode' }"
+                    @click.prevent="Homestore.setWatch">视频</a>
+                <a href="#" :class="{ active: Homestore.HomeMode === 'PlayMode' }"
+                    @click.prevent="Homestore.setPlay">游戏</a>
+
+                <a href="#" :class="{ active: Homestore.HomeMode === 'ShopMode' }"
+                    @click.prevent="Homestore.setShop">逛逛</a>
+
+
             </div>
+
             <div class="auth-buttons">
                 <div v-if="Userstore.userInfo" class="logged-in-box">
                     <span class="user-name">Hi, {{ Userstore.userInfo.nickName || Userstore.userInfo.userName }}</span>
-
                     <button @click="goProfile" class="btn profile-btn">个人资料</button>
                     <button @click="handleLogout" class="btn logout-btn">退出</button>
                 </div>
-
                 <div v-else>
                     <button @click="goLogin" class="btn login-btn">登录</button>
                 </div>
@@ -54,7 +62,7 @@ const handleLogout = () => {
 </template>
 
 <style scoped>
-/* 原有的样式 */
+/* 样式部分不需要大改，保留原有的 hover 和 active 逻辑即可 */
 .navbar {
     position: fixed;
     top: 0;
@@ -104,11 +112,16 @@ const handleLogout = () => {
     text-decoration: none;
     color: #333;
     font-weight: 500;
+    cursor: pointer;
+    transition: color 0.3s;
 }
 
+/* 这里对应 :class="{ active: ... }" */
 .nav-links a:hover,
 .nav-links a.active {
     color: #fa7d3c;
+    font-weight: bold;
+    /* 选中时加粗一点，效果更好 */
 }
 
 .btn {
@@ -125,36 +138,29 @@ const handleLogout = () => {
     color: #fa7d3c;
 }
 
-/* --- 3. 新增的样式 --- */
-
-/* 登录后的容器 */
 .logged-in-box {
     display: flex;
     align-items: center;
 }
 
-/* 用户名文字 */
 .user-name {
     font-size: 14px;
     color: #666;
     margin-right: 5px;
 }
 
-/* 个人资料按钮（橙色实心） */
 .profile-btn {
     background: #fa7d3c;
     color: #fff;
     border: 1px solid #fa7d3c;
 }
 
-/* 退出按钮（灰色小字） */
 .logout-btn {
     background: transparent;
     color: #999;
     border: none;
     font-size: 12px;
     padding: 5px 5px;
-    /* 稍微缩小一点 */
 }
 
 .logout-btn:hover {

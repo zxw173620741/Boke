@@ -1,9 +1,31 @@
 <script setup>
-// 引入刚刚拆分的四个组件
+import { useHomeStore } from '@/stores/home'
+import { computed } from 'vue'
 import NavBar from '@/components/HomeView/NavBar.vue'
 import LeftSidebar from '@/components/HomeView/LeftSidebar.vue'
 import RightSidebar from '@/components/HomeView/RightSidebar.vue'
-import FeedContent from '@/components/HomeView/FeedContent.vue'
+
+
+
+import FocusCenter from '@/components/HomeView/centers/FocusCenter.vue'
+import WatchCenter from '@/components/HomeView/centers/WatchCenter.vue'
+import PlayCenter from '@/components/HomeView/centers/PlayCenter.vue'
+import ShopCenter from '@/components/HomeView/centers/ShopCenter.vue'
+const Homestore = useHomeStore()
+const centerMap = {
+    'FocusMode': FocusCenter,
+    'WatchMode': WatchCenter,
+    'PlayMode': PlayCenter,
+    'ShopMode': ShopCenter
+}
+
+const currentCenter = computed(() => {
+    const mode = Homestore.HomeMode
+    // 返回对应的组件，如果找不到（为了安全），默认返回 FocusCenter
+    return centerMap[mode] || FocusCenter
+})
+
+
 </script>
 
 <template>
@@ -13,7 +35,11 @@ import FeedContent from '@/components/HomeView/FeedContent.vue'
         <div class="main-layout">
             <LeftSidebar />
 
-            <FeedContent />
+            <div class="center-content">
+                <KeepAlive>
+                    <component :is="currentCenter" />
+                </KeepAlive>
+            </div>
 
             <RightSidebar />
         </div>
@@ -21,21 +47,22 @@ import FeedContent from '@/components/HomeView/FeedContent.vue'
 </template>
 
 <style scoped>
-/* 这里只保留全局容器的背景和布局样式 */
 .weibo-container {
     background-color: #f2f2f2;
-    /* 微博经典的浅灰背景 */
     min-height: 100vh;
     padding-top: 60px;
-    /* 给固定导航栏留位置 */
 }
 
-/* 主布局容器：负责三个栏目的横向排列 */
 .main-layout {
     width: 1100px;
     margin: 20px auto;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
+}
+
+/* 可以在这里给中间区域定宽，或者在各个子组件里定宽 */
+.center-content {
+    width: 600px;
 }
 </style>

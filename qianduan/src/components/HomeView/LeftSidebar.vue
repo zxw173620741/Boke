@@ -1,19 +1,29 @@
 <script setup>
-// 左侧栏目前是静态的，暂时不需要 JS逻辑
+import { useHomeStore } from '@/stores/home'
+const Homestore = useHomeStore()
+
+// 定义菜单配置数组
+const menuList = [
+    { label: '🔥 热门', mode: 'FocusMode', action: Homestore.setFocus },
+    { label: '📺 视频', mode: 'WatchMode', action: Homestore.setWatch },
+    { label: '🎮 游戏中心', mode: 'PlayMode', action: Homestore.setPlay },
+    { label: '🛍️ 逛逛', mode: 'ShopMode', action: Homestore.setShop },
+]
 </script>
 
 <template>
     <aside class="left-sidebar">
         <div class="menu-list">
-            <div class="menu-item active">🔥 热门</div>
-            <div class="menu-item">📺 视频</div>
-            <div class="menu-item">🎮 游戏中心</div>
-            <div class="menu-item">🛍️ 逛逛</div>
+            <div v-for="(item, index) in menuList" :key="index" class="menu-item"
+                :class="{ active: Homestore.HomeMode === item.mode }" @click="item.action">
+                {{ item.label }}
+            </div>
         </div>
     </aside>
 </template>
 
 <style scoped>
+/* 样式同上 */
 .left-sidebar {
     width: 150px;
     position: sticky;

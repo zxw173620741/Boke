@@ -10,18 +10,13 @@ const request = axios.create({
 request.interceptors.response.use(
   (response) => {
     const res = response.data
-
-    // 成功 (code === 1): 直接返回 data，组件里不用写 .data.data 了
     if (res.code === 1) {
       return res.data
     }
-
-    // 失败 (密码错等): 统一弹窗，并抛出错误打断流程
     console.log(res.msg || '系统异常')
     return Promise.reject(res.msg || 'Error')
   },
   (error) => {
-    // 网络错误 (404/500 等): 统一弹窗
     console.log('网络连接失败')
     console.error(error)
     return Promise.reject(error)
