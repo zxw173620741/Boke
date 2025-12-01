@@ -8,7 +8,6 @@ export const loginService = (loginData) => {
   return request.post('/user/login', loginData)
 }
 
-// 以后如果有注册接口，就直接写在这里
-// export const registerService = (registerData) => {
-//   return request.post('/user/register', registerData)
-// }
+export const registerService = (registerData) => {
+  return request.post('/user/register', registerData)
+}

@@ -80,7 +80,9 @@ onMounted(() => {
 
             <div class="publish-footer">
                 <div class="tools">😊 📷 🔗</div>
-                <button class="pub-btn" @click="handlePublish">发布</button>
+                <button class="pub-btn" :class="{ 'active': userStore.userInfo }" @click="handlePublish">
+                    {{ userStore.userInfo ? '点击发布' : '需要登录' }}
+                </button>
             </div>
         </div>
 
@@ -161,12 +163,26 @@ onMounted(() => {
 }
 
 .pub-btn {
-    background: #ffc09f;
-    color: #fff;
+    background: #e4e4e4;
+    color: #999;
     border: none;
     padding: 5px 20px;
     border-radius: 4px;
     cursor: pointer;
+    /* 改回手型，这样用户知道可以点 */
+    transition: all 0.3s;
+}
+
+.pub-btn.active {
+    background: #ffc09f;
+    /* 原来的橙色 */
+    color: #fff;
+    cursor: pointer;
+    /* 鼠标移上去显示手型 */
+}
+
+.pub-btn.active:hover {
+    background: #fa7d3c;
 }
 
 .post-card {
