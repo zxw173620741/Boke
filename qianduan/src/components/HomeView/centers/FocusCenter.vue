@@ -1,20 +1,20 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { getArticleListService, publishArticleService, likeArticleService } from '@/api/article.js'
-import { useUserStore } from '@/stores/user'
+import { useUserStore } from '@/stores/user' // 1. 引入 UserStore
 
-const userStore = useUserStore()
+const userStore = useUserStore() // 2. 初始化 store
 const articleList = ref([])
-const publishContent = ref('')
+const publishContent = ref('') // 3. 定义响应式变量绑定输入框
 
-// 获取文章列表
+// 获取文章列表 
 const getArticleList = async () => {
     try {
-        // ⭐ 关键改动：获取当前登录用户的 ID
+        // ⭐ 改动2：获取当前用户ID并传给后端
         // 如果没登录，myUserId 就是 undefined，后端会当做游客处理
         const myUserId = userStore.userInfo ? userStore.userInfo.id : undefined
 
-        // 把 userId 传给后端
+        // 注意：这里需要配合 api/article.js 的修改，允许传参
         const data = await getArticleListService({ userId: myUserId })
         articleList.value = data
     } catch (error) {
@@ -24,71 +24,88 @@ const getArticleList = async () => {
 
 // 格式化内容 (保持不变)
 const formatContent = (content) => {
-    if (!content) return ''
+    if (!content) return '' // 如果内容为空，返回空字符串
+
+    // 正则匹配链接
     const urlRegex = /(https?:\/\/[^\s]+)/g
+
+    // 将链接转换为可点击的 a 标签
     return content.replace(urlRegex, (url) => {
         return `<a href="${url}" target="_blank" style="color: #409eff; text-decoration: none;">${url}</a>`
     })
 }
 
-// 处理发布 (保持不变)
+// ⭐ 4. 核心逻辑：处理发布
 const handlePublish = async () => {
+    // 4.1 检查是否登录
     if (!userStore.userInfo) {
         alert('请先登录后再发布新鲜事！')
         return
     }
+
+    // 4.2 检查内容是否为空
     if (!publishContent.value.trim()) {
         alert('写点什么再发吧~')
         return
     }
+
     try {
+        // 4.3 构造参数
         const articleData = {
-            userId: userStore.userInfo.id,
+            userId: userStore.userInfo.id, // 从登录信息中获取 ID
             content: publishContent.value,
-            source: '网页版'
+            source: '网页版' // 暂时写死
         }
+
+        // 4.4 调用接口
         await publishArticleService(articleData)
+
         alert('发布成功！')
-        publishContent.value = ''
-        getArticleList()
+        publishContent.value = '' // 清空输入框
+        getArticleList() // 刷新列表，看到刚才发的内容
+
     } catch (error) {
         console.error('发布失败', error)
         alert('发布失败，请稍后再试')
     }
 }
 
-// ⭐ 新增：处理点赞逻辑
+
+// ⭐ 改动3：新增点赞处理函数
 const handleLike = async (item) => {
-    // 1. 权限校验
+    // 1. 检查登录
     if (!userStore.userInfo) {
         alert('请登录后再点赞')
         return
     }
 
-    // 2. 乐观更新（Optimistic UI）：先改界面，再发请求
-    // 这样用户感觉不到延迟，体验极佳
-    const originalLiked = item.isLiked // 备份一下，万一请求失败了可以恢复
+    // 2. 防止连点（可选）
+    if (item.liking) return
+    item.liking = true
+
+    // 3. 备份状态（为了失败回滚）
+    const originalLiked = item.isLiked
     const originalCount = item.likeCount
 
-    // 切换状态
+    // 4. 乐观更新：先改界面，让用户觉得“秒开”
     item.isLiked = !item.isLiked
-    // 更新数字
     if (item.isLiked) {
-        item.likeCount++
+        item.likeCount = (item.likeCount || 0) + 1
     } else {
-        item.likeCount--
+        item.likeCount = (item.likeCount || 0) - 1
     }
 
     try {
-        // 3. 发送请求给后端
+        // 5. 发送请求
         await likeArticleService(item.id, userStore.userInfo.id)
-        // 请求成功，什么都不用做，因为界面已经变了
     } catch (error) {
         console.error('点赞失败', error)
-        // 4. 如果请求失败，回滚界面状态
+        // 6. 失败回滚
         item.isLiked = originalLiked
         item.likeCount = originalCount
-        alert('操作失败，请检查网络')
+        alert('点赞失败，请稍后再试')
+    } finally {
+        item.liking = false
     }
 }
 
@@ -99,10 +116,12 @@ onMounted(() => {
 
 <template>
     <main class="feed-content">
-        <!-- 发布框 -->
+        <!-- 发布框 (暂时保持不变) -->
         <div class="publish-card">
             <div class="publish-title">有什么新鲜事想告诉大家？</div>
+
             <textarea v-model="publishContent" placeholder="快来分享你的博客心得吧..."></textarea>
+
             <div class="publish-footer">
                 <div class="tools">😊 📷 🔗</div>
                 <button class="pub-btn" :class="{ 'active': userStore.userInfo }" @click="handlePublish">
@@ -111,38 +130,44 @@ onMounted(() => {
             </div>
         </div>
 
-        <!-- 文章列表 -->
+        <!-- 文章列表 (从后端获取真实数据) -->
+        <!-- 这里的 item 就是后端返回的 ArticleVO 对象 -->
         <div class="post-card" v-for="item in articleList" :key="item.id">
             <div class="post-header">
-                <!-- 头像显示 -->
-                <div class="avatar" :style="item.authorAvatar ? { backgroundImage: `url(${item.authorAvatar})` } : {}">
-                </div>
+                <!-- 头像: 这里暂时用默认样式，后面可以换成 :style="{ backgroundImage: `url(${item.authorAvatar})` }" -->
+                <div class="avatar"></div>
+
                 <div class="user-info">
+                    <!-- 显示作者昵称，如果没有昵称就显示用户名 -->
                     <div class="username">{{ item.authorNickName || item.authorName }}</div>
+
+                    <!-- 显示发布时间 (简单处理，后端返回的是 ISO 格式字符串) -->
                     <div class="time">{{ item.createTime }} · 来自 {{ item.source || '网页版' }}</div>
                 </div>
             </div>
 
             <div class="post-body">
+                <!-- 显示文章内容 -->
+
                 <p v-html="formatContent(item.content)"></p>
-                <!-- 图片展示预留 -->
+
+
+                <!-- 如果有图片，可以在这里解析 item.images 并显示 -->
                 <!-- <div v-if="item.images" class="post-images">...</div> -->
             </div>
 
             <div class="post-footer">
+                <!-- 显示真实的互动数据 -->
                 <div class="action-item">↪ 转发 {{ item.shareCount || '' }}</div>
                 <div class="action-item">💬 评论 {{ item.commentCount || '' }}</div>
 
-                <!-- ⭐ 修改点赞按钮 -->
-                <!-- 绑定点击事件，绑定动态 class -->
                 <div class="action-item" :class="{ 'liked': item.isLiked }" @click="handleLike(item)">
-                    <!-- 图标根据状态变化 -->
-                    <span class="icon">{{ item.isLiked ? '👍' : '👍' }}</span>
-                    点赞 {{ item.likeCount || '' }}
+                    {{ item.isLiked ? '👍 已赞' : '👍 点赞' }} {{ item.likeCount || 0 }}
                 </div>
             </div>
         </div>
 
+        <!-- 如果没有数据，显示空状态 (可选) -->
         <div v-if="articleList.length === 0" class="empty-tip">
             暂无内容，快去发布第一条博客吧！
         </div>
@@ -175,7 +200,6 @@ onMounted(() => {
     padding: 10px;
     resize: none;
     box-sizing: border-box;
-    font-family: inherit;
 }
 
 .publish-footer {
@@ -191,18 +215,21 @@ onMounted(() => {
     border: none;
     padding: 5px 20px;
     border-radius: 4px;
-    cursor: not-allowed;
+    cursor: pointer;
+    /* 改回手型，这样用户知道可以点 */
     transition: all 0.3s;
 }
 
 .pub-btn.active {
-    background: #fa7d3c;
+    background: #ffc09f;
+    /* 原来的橙色 */
     color: #fff;
     cursor: pointer;
+    /* 鼠标移上去显示手型 */
 }
 
 .pub-btn.active:hover {
-    background: #e0601b;
+    background: #fa7d3c;
 }
 
 .post-card {
@@ -223,8 +250,6 @@ onMounted(() => {
     background: #ddd;
     border-radius: 50%;
     margin-right: 10px;
-    background-size: cover;
-    background-position: center;
 }
 
 .username {
@@ -243,6 +268,7 @@ onMounted(() => {
     line-height: 1.6;
     margin-bottom: 15px;
     white-space: pre-wrap;
+    /* 关键：保留文章里的换行符 */
 }
 
 .post-footer {
@@ -257,31 +283,22 @@ onMounted(() => {
     color: #808080;
     cursor: pointer;
     font-size: 14px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    transition: color 0.2s;
 }
 
 .action-item:hover {
     color: #fa7d3c;
 }
 
-.icon {
-    margin-right: 4px;
-    font-size: 16px;
-}
-
-/* ⭐ 点赞激活状态的样式 */
-.action-item.liked {
-    color: #fa7d3c;
-    /* 橙色 */
-    font-weight: bold;
-}
-
 .empty-tip {
     text-align: center;
     color: #999;
     padding: 40px 0;
+}
+
+/* 点赞后的样式 */
+.action-item.liked {
+    color: #fa7d3c;
+    /* 变成品牌橙色 */
+    font-weight: bold;
 }
 </style>
