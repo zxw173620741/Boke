@@ -16,4 +16,19 @@ public class UserService {
         }
         return null; // 用户不存在或密码错误
     }
+    public void register(User user) {
+        // 1. 先检查用户名是否被占用
+        User existingUser = userMapper.selectByUserName(user.getUserName());
+        if (existingUser != null) {
+            throw new RuntimeException("用户名已存在，请换一个试试");
+        }
+
+        // 2. 如果前端没传昵称，默认设置为用户名（兜底逻辑）
+        if (user.getNickName() == null || user.getNickName().isEmpty()) {
+            user.setNickName("用户" + user.getUserName());
+        }
+
+        // 3. 保存到数据库
+        userMapper.insert(user);
+    }
 }

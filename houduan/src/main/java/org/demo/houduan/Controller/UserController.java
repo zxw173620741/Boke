@@ -25,4 +25,25 @@ public class UserController {
             return Result.error("登录失败，用户名或密码错误！");
         }
     }
+    // ⭐ 新增：注册接口
+    @PostMapping("/register")
+    public Result<String> register(@RequestBody User user) {
+        System.out.println("收到注册请求，用户名：" + user.getUserName());
+
+        // 简单参数校验
+        if (user.getUserName() == null || user.getUserName().trim().isEmpty()) {
+            return Result.error("用户名不能为空");
+        }
+        if (user.getPassword() == null || user.getPassword().trim().isEmpty()) {
+            return Result.error("密码不能为空");
+        }
+
+        try {
+            userService.register(user);
+            return Result.success("注册成功");
+        } catch (Exception e) {
+            // 捕获 Service 层抛出的“用户名已存在”等异常
+            return Result.error(e.getMessage());
+        }
+    }
 }

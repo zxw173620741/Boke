@@ -10,4 +10,8 @@
         WHERE user_name = #{userName}
     </select>
 
+    <insert id="insert" parameterType="org.demo.houduan.Entity.User" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `user` (user_name, password, nick_name)
+        VALUES (#{userName}, #{password}, #{nickName})
+    </insert>
 </mapper>

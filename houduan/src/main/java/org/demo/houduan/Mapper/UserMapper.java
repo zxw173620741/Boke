@@ -6,4 +6,6 @@ import org.demo.houduan.Entity.User;
 public interface UserMapper {
 
     User selectByUserName(String userName);
+
+    void insert(User user);
 }
