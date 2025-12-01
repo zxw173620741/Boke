@@ -29,4 +29,6 @@ public class ArticleVO extends Article {
      * (目前数据库 user 表还没这个字段，作为预留)
      */
     private String authorAvatar;
+
+    private Boolean isLiked;
 }
